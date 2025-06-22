@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de Thumbnails para Beats v10</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700;900&family=Anton&family=Bebas+Neue&family=Roboto:wght@700;900&family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+    
+    <!-- html2canvas library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .preview-text-title { text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8); }
+        .preview-text-subtitle { text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7); }
+        
+        .draggable {
+            position: absolute;
+            cursor: move;
+            z-index: 20;
+        }
+
+        #preview-logo { display: none; }
+        
+        input[type="file"]::file-selector-button {
+            @apply bg-cyan-500 text-slate-900 font-bold py-2 px-4 rounded-lg cursor-pointer transition-colors hover:bg-cyan-400 border-0;
+        }
+
+        #preview-bg-image {
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .font-anton { font-family: 'Anton', sans-serif; }
+        .font-bebas-neue { font-family: 'Bebas Neue', cursive; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white antialiased">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-cyan-400 font-bebas-neue tracking-wider">Gerador de Thumbnails</h1>
+            <p class="text-slate-400 mt-2">Crie capas profissionais para seus beats em segundos.</p>
+        </header>
+
+        <main class="flex flex-col gap-8">
+            <!-- Controls Panel -->
+            <div class="w-full bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-700">
+                <h2 class="text-2xl font-bold mb-6 border-b border-slate-600 pb-4">Personalize sua Capa</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     <!-- Coluna 1: Templates e Textos -->
+                    <div class="md:col-span-1 space-y-6">
+                        <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">Layout</legend>
+                             <label class="block mb-2 text-sm text-slate-300">Templates Pré-definidos</label>
+                            <select id="template-select" class="w-full bg-slate-700 border-slate-600 rounded-lg p-2.5">
+                                <option value="center">Centralizado (Padrão)</option>
+                                <option value="align-left">Alinhado à Esquerda</option>
+                                <option value="align-right">Alinhado à Direita</option>
+                                <option value="bottom-left">Canto Inferior Esquerdo</option>
+                                <option value="vertical-left">Vertical Esquerda</option>
+                                <option value="big-title">Título em Destaque</option>
+                                <option value="split-layout">Layout Dividido</option>
+                                <option value="minimal-top">Minimalista Superior</option>
+                                <option value="bottom-banner">Faixa Inferior</option>
+                            </select>
+                        </fieldset>
+                         <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">Imagens & Overlay</legend>
+                             <div class="space-y-4">
+                                <div>
+                                    <label for="background-upload" class="block mb-2 text-sm font-medium text-slate-300">Fundo (PC)</label>
+                                    <input type="file" id="background-upload" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:border-0">
+                                </div>
+                                <div>
+                                    <label for="background-zoom" class="block mb-2 text-sm text-slate-300">Zoom do Fundo: <span id="background-zoom-value">100%</span></label>
+                                    <input type="range" id="background-zoom" min="50" max="300" step="1" value="100" class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer">
+                                </div>
+                                <div>
+                                    <label for="logo-upload" class="block mb-2 text-sm font-medium text-slate-300">Logo (PC)</label>
+                                    <input type="file" id="logo-upload" accept="image/*" class="w-full text-sm text-slate-400 file:mr-4 file:border-0">
+                                </div>
+                                <div>
+                                    <label for="logo-size" class="block mb-2 text-sm text-slate-300">Tamanho da Logo: <span id="logo-size-value">100px</span></label>
+                                    <input type="range" id="logo-size" min="20" max="500" step="5" value="100" class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer">
+                                </div>
+                                <div class="flex items-center gap-4">
+                                     <div class="w-1/4">
+                                        <label class="block mb-2 text-sm text-slate-300">Overlay</label>
+                                        <input title="Cor Sobreposição" type="color" id="overlay-color" value="#000000" class="w-full h-10 p-1 bg-slate-700 border border-slate-600 rounded-lg cursor-pointer">
+                                     </div>
+                                     <div class="w-3/4">
+                                        <label class="block mb-2 text-sm text-slate-300">Opacidade: <span id="opacity-value">50%</span></label>
+                                        <input type="range" id="overlay-opacity" min="0" max="1" step="0.05" value="0.5" class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer">
+                                     </div>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </div>
+                     <!-- Coluna 2 e 3: Controles Detalhados -->
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">Título</legend>
+                            <input type="text" id="beat-title" value="NIGHT DRIVE" class="w-full bg-slate-700 border rounded-lg p-2.5 mb-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <label>Fonte <select id="title-font" class="w-full bg-slate-700 p-2.5 rounded-lg mt-1"><option value="font-anton">Anton</option><option value="font-bebas-neue" selected>Bebas Neue</option><option value="font-montserrat">Montserrat</option><option value="font-roboto">Roboto</option><option value="font-poppins">Poppins</option></select></label>
+                                <label>Cor <input type="color" id="title-color" value="#ffffff" class="w-full h-10 p-1 mt-1 bg-slate-700 rounded-lg"></label>
+                            </div>
+                            <label class="block mt-4">Tamanho: <span id="title-size-value">80px</span><input type="range" id="title-size" min="30" max="150" value="80" class="w-full h-2 mt-1 bg-slate-700 rounded-lg"></label>
+                        </fieldset>
+
+                        <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">Type Beat</legend>
+                             <input type="text" id="producer-name" value="Travis Scott x Migos Type Beat" class="w-full bg-slate-700 border rounded-lg p-2.5 mb-4">
+                             <label>Tamanho: <span id="producer-size-value">18px</span><input type="range" id="producer-size" min="10" max="50" value="18" class="w-full h-2 mt-1 bg-slate-700 rounded-lg"></label>
+                             <label class="block mt-4">Cor <input type="color" id="producer-color" value="#d1d5db" class="w-full h-10 p-1 mt-1 bg-slate-700 rounded-lg"></label>
+                        </fieldset>
+
+                        <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">Gênero</legend>
+                            <input type="text" id="genre-tag" value="Trap | Phonk" class="w-full bg-slate-700 border rounded-lg p-2.5 mb-4">
+                            <label>Tamanho: <span id="genre-size-value">20px</span><input type="range" id="genre-size" min="10" max="50" value="20" class="w-full h-2 mt-1 bg-slate-700 rounded-lg"></label>
+                            <label class="block mt-4">Cor <input type="color" id="genre-color" value="#22d3ee" class="w-full h-10 p-1 mt-1 bg-slate-700 rounded-lg"></label>
+                        </fieldset>
+
+                        <fieldset class="border border-slate-600 p-4 rounded-lg">
+                            <legend class="px-2 text-cyan-400 font-bold">BPM & Key</legend>
+                            <div class="flex gap-4 mb-4">
+                                <input type="text" id="bpm-input" value="140 BPM" class="w-1/2 bg-slate-700 rounded-lg p-2.5">
+                                <input type="text" id="key-input" value="C#m" class="w-1/2 bg-slate-700 rounded-lg p-2.5">
+                            </div>
+                            <label>Tamanho: <span id="bpm-key-size-value">16px</span><input type="range" id="bpm-key-size" min="10" max="50" value="16" class="w-full h-2 mt-1 bg-slate-700 rounded-lg"></label>
+                            <label class="block mt-4">Cor <input type="color" id="bpm-key-color" value="#ffffff" class="w-full h-10 p-1 mt-1 bg-slate-700 rounded-lg"></label>
+                        </fieldset>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview and Download Section -->
+            <div class="w-full flex flex-col items-center justify-center">
+                <div id="thumbnail-preview" class="w-full max-w-5xl aspect-video bg-black rounded-2xl shadow-2xl overflow-hidden relative p-8">
+                    <img id="preview-bg-image" src="https://placehold.co/1280x720/1a1b26/ffffff?text=Sua+Arte+Aqui" class="absolute top-0 left-0 w-full h-full object-cover" alt="Background">
+                    <div id="preview-overlay" class="absolute top-0 left-0 w-full h-full"></div>
+                    
+                    <img id="preview-logo" alt="Sua logo" class="draggable">
+                    
+                    <div id="genre-wrapper" class="draggable">
+                         <h3 id="preview-genre" class="font-bold uppercase tracking-widest preview-text-subtitle text-center">Trap | Phonk</h3>
+                    </div>
+                     <div id="title-wrapper" class="draggable">
+                        <h1 id="preview-title" class="font-black uppercase break-words preview-text-title leading-none text-center">NIGHT DRIVE</h1>
+                     </div>
+                     <div id="producer-wrapper" class="draggable">
+                        <p id="preview-producer" class="tracking-wider preview-text-subtitle text-center">Travis Scott x Migos Type Beat</p>
+                     </div>
+                     <div id="bpm-key-wrapper" class="draggable">
+                        <div id="preview-bpm-key" class="font-semibold tracking-wider preview-text-subtitle text-center">
+                           <span>140 BPM</span> &bull; <span>C#m</span>
+                        </div>
+                     </div>
+                </div>
+                <button id="download-btn" class="mt-8 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold py-3 px-8 rounded-lg shadow-lg transition-transform transform hover:scale-105 w-full md:w-auto md:max-w-md">
+                    Gerar & Baixar PNG
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const controls = {
+                beatTitle: document.getElementById('beat-title'), producerName: document.getElementById('producer-name'),
+                genreTag: document.getElementById('genre-tag'), bpm: document.getElementById('bpm-input'), key: document.getElementById('key-input'),
+                backgroundUpload: document.getElementById('background-upload'), logoUpload: document.getElementById('logo-upload'),
+                logoSize: document.getElementById('logo-size'), titleColor: document.getElementById('title-color'),
+                producerColor: document.getElementById('producer-color'), genreColor: document.getElementById('genre-color'),
+                bpmKeyColor: document.getElementById('bpm-key-color'), overlayColor: document.getElementById('overlay-color'),
+                overlayOpacity: document.getElementById('overlay-opacity'), titleFont: document.getElementById('title-font'),
+                titleSize: document.getElementById('title-size'), producerSize: document.getElementById('producer-size'),
+                genreSize: document.getElementById('genre-size'), bpmKeySize: document.getElementById('bpm-key-size'),
+                templateSelect: document.getElementById('template-select'),
+                backgroundZoom: document.getElementById('background-zoom'),
+            };
+            const preview = {
+                title: document.getElementById('preview-title'), producer: document.getElementById('preview-producer'),
+                genre: document.getElementById('preview-genre'), bpmKey: document.getElementById('preview-bpm-key'),
+                bgImage: document.getElementById('preview-bg-image'), overlay: document.getElementById('preview-overlay'),
+                logo: document.getElementById('preview-logo'), container: document.getElementById('thumbnail-preview'),
+                wrappers: {
+                    title: document.getElementById('title-wrapper'),
+                    producer: document.getElementById('producer-wrapper'),
+                    genre: document.getElementById('genre-wrapper'),
+                    bpmKey: document.getElementById('bpm-key-wrapper'),
+                }
+            };
+            const valueDisplays = {
+                opacity: document.getElementById('opacity-value'), logoSize: document.getElementById('logo-size-value'),
+                titleSize: document.getElementById('title-size-value'), producerSize: document.getElementById('producer-size-value'),
+                genreSize: document.getElementById('genre-size-value'), bpmKeySize: document.getElementById('bpm-key-size-value'),
+                backgroundZoom: document.getElementById('background-zoom-value'),
+            };
+
+            const fontClasses = ['font-anton', 'font-bebas-neue', 'font-roboto', 'font-montserrat', 'font-poppins'];
+            
+            // --- TEMPLATE DEFINITIONS ---
+            const templates = {
+                center: {
+                    title: { top: '38%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    genre: { top: '30%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    producer: { top: '60%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    bpmKey: { top: '88%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                },
+                'align-left': {
+                    title: { top: '38%', left: '8%', transform: 'none', textAlign: 'left' },
+                    genre: { top: '30%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '60%', left: '8%', transform: 'none', textAlign: 'left' },
+                    bpmKey: { top: '88%', left: '8%', transform: 'none', textAlign: 'left' },
+                },
+                'align-right': {
+                    title: { top: '38%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                    genre: { top: '30%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                    producer: { top: '60%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                    bpmKey: { top: '88%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                },
+                'bottom-left': {
+                    genre: { top: '65%', left: '8%', transform: 'none', textAlign: 'left' },
+                    title: { top: '70%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '85%', left: '8%', transform: 'none', textAlign: 'left' },
+                    bpmKey: { top: '90%', left: '8%', transform: 'none', textAlign: 'left' },
+                },
+                'vertical-left': {
+                    genre: { top: '25%', left: '8%', transform: 'none', textAlign: 'left' },
+                    title: { top: '35%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '55%', left: '8%', transform: 'none', textAlign: 'left' },
+                    bpmKey: { top: '65%', left: '8%', transform: 'none', textAlign: 'left' },
+                },
+                'big-title': {
+                    title: { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center' },
+                    genre: { top: '10%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    producer: { top: '80%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    bpmKey: { top: '90%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                },
+                'split-layout': {
+                    title: { top: '30%', left: '8%', transform: 'none', textAlign: 'left' },
+                    genre: { top: '22%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '80%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                    bpmKey: { top: '88%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                },
+                'minimal-top': {
+                    title: { top: '8%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '18%', left: '8%', transform: 'none', textAlign: 'left' },
+                    genre: { top: '8%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                    bpmKey: { top: '18%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                },
+                'bottom-banner': {
+                    title: { top: '75%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    genre: { top: '85%', left: '8%', transform: 'none', textAlign: 'left' },
+                    producer: { top: '70%', left: '50%', transform: 'translateX(-50%)', textAlign: 'center' },
+                    bpmKey: { top: '85%', left: '92%', transform: 'translateX(-100%)', textAlign: 'right' },
+                }
+            };
+
+            function applyTemplate(templateName) {
+                const template = templates[templateName];
+                if (!template) return;
+                if (templateName === 'big-title') {
+                    controls.titleSize.value = 140;
+                    controls.producerSize.value = 16;
+                    controls.genreSize.value = 20;
+                } else if (templateName === 'minimal-top') {
+                    controls.titleSize.value = 32;
+                    controls.producerSize.value = 14;
+                    controls.genreSize.value = 14;
+                    controls.bpmKeySize.value = 14;
+                } else {
+                    controls.titleSize.value = 80;
+                    controls.producerSize.value = 18;
+                    controls.genreSize.value = 20;
+                    controls.bpmKeySize.value = 16;
+                }
+                
+                for (const key in template) {
+                    const wrapper = preview.wrappers[key];
+                    const styles = template[key];
+                    Object.assign(wrapper.style, styles);
+                    wrapper.querySelector('h1, h3, p, div').style.textAlign = styles.textAlign;
+                }
+                updatePreview();
+            }
+
+            const updatePreview = () => {
+                preview.title.innerText = controls.beatTitle.value;
+                preview.producer.innerText = controls.producerName.value;
+                preview.genre.innerText = controls.genreTag.value;
+                preview.bpmKey.innerHTML = `<span>${controls.bpm.value}</span> &bull; <span>${controls.key.value}</span>`;
+                preview.title.style.color = controls.titleColor.value;
+                preview.producer.style.color = controls.producerColor.value;
+                preview.genre.style.color = controls.genreColor.value;
+                preview.bpmKey.style.color = controls.bpmKeyColor.value;
+                const oc = controls.overlayColor.value;
+                const r = parseInt(oc.slice(1, 3), 16), g = parseInt(oc.slice(3, 5), 16), b = parseInt(oc.slice(5, 7), 16);
+                preview.overlay.style.backgroundColor = `rgba(${r}, ${g}, ${b}, ${controls.overlayOpacity.value})`;
+                valueDisplays.opacity.textContent = `${Math.round(controls.overlayOpacity.value * 100)}%`;
+                preview.title.classList.remove(...fontClasses);
+                preview.title.classList.add(controls.titleFont.value);
+                preview.title.style.fontSize = `${controls.titleSize.value}px`; valueDisplays.titleSize.textContent = `${controls.titleSize.value}px`;
+                preview.producer.style.fontSize = `${controls.producerSize.value}px`; valueDisplays.producerSize.textContent = `${controls.producerSize.value}px`;
+                preview.genre.style.fontSize = `${controls.genreSize.value}px`; valueDisplays.genreSize.textContent = `${controls.genreSize.value}px`;
+                preview.bpmKey.style.fontSize = `${controls.bpmKeySize.value}px`; valueDisplays.bpmKeySize.textContent = `${controls.bpmKeySize.value}px`;
+                
+                if(controls.logoSize) {
+                    preview.logo.style.width = `${controls.logoSize.value}px`;
+                    if (valueDisplays.logoSize) {
+                       valueDisplays.logoSize.textContent = `${controls.logoSize.value}px`;
+                    }
+                }
+                // Background Zoom
+                const zoomLevel = controls.backgroundZoom.value / 100;
+                preview.bgImage.style.transform = `scale(${zoomLevel})`;
+                valueDisplays.backgroundZoom.textContent = `${controls.backgroundZoom.value}%`;
+
+            };
+            
+            Object.values(controls).forEach(input => {
+                if (input) {
+                    input.addEventListener('input', updatePreview)
+                }
+            });
+            controls.templateSelect.addEventListener('change', (e) => applyTemplate(e.target.value));
+
+            controls.backgroundUpload.addEventListener('change', e => { if (e.target.files && e.target.files[0]) { const reader = new FileReader(); reader.onload = event => { preview.bgImage.src = event.target.result; }; reader.readAsDataURL(e.target.files[0]); } });
+            controls.logoUpload.addEventListener('change', e => { if (e.target.files && e.target.files[0]) { const reader = new FileReader(); reader.onload = event => { preview.logo.src = event.target.result; preview.logo.style.display = 'block'; preview.logo.style.top = '50%'; preview.logo.style.left = '50%'; preview.logo.style.transform = 'translate(-50%, -50%)'; }; reader.readAsDataURL(e.target.files[0]); } });
+            
+            function makeDraggable(element, container) {
+                let isDragging = false, offsetX, offsetY;
+                element.addEventListener('mousedown', e => {
+                    isDragging = true;
+                    offsetX = e.clientX - element.getBoundingClientRect().left;
+                    offsetY = e.clientY - element.getBoundingClientRect().top;
+                    element.style.cursor = 'grabbing';
+                    e.stopPropagation();
+                });
+                document.addEventListener('mousemove', e => {
+                    if (!isDragging) return;
+                    const cRect = container.getBoundingClientRect();
+                    let newX = e.clientX - cRect.left - offsetX;
+                    let newY = e.clientY - cRect.top - offsetY;
+                    newX = Math.max(0, Math.min(newX, cRect.width - element.offsetWidth));
+                    newY = Math.max(0, Math.min(newY, cRect.height - element.offsetHeight));
+                    element.style.left = `${newX}px`;
+                    element.style.top = `${newY}px`;
+                    element.style.transform = 'none';
+                });
+                document.addEventListener('mouseup', () => { isDragging = false; element.style.cursor = 'move'; });
+            }
+            makeDraggable(preview.logo, preview.container);
+            Object.values(preview.wrappers).forEach(wrapper => makeDraggable(wrapper, preview.container));
+
+            document.getElementById('download-btn').addEventListener('click', () => {
+                const btn = document.getElementById('download-btn'); btn.textContent = 'Gerando Imagem...'; btn.disabled = true;
+                
+                document.fonts.ready.then(() => {
+                    const node = preview.container;
+                    html2canvas(node, { 
+                        useCORS: true, 
+                        allowTaint: true, 
+                        scale: 2, 
+                        backgroundColor: null,
+                        width: node.scrollWidth,
+                        height: node.scrollHeight
+                    })
+                        .then(canvas => {
+                            const link = document.createElement('a');
+                            link.download = `${controls.beatTitle.value.toLowerCase().replace(/\s+/g, '-')}-thumbnail.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                            btn.textContent = 'Gerar & Baixar PNG'; btn.disabled = false;
+                        }).catch(err => {
+                            console.error('Oops! Algo deu errado ao gerar o canvas:', err); 
+                            btn.textContent = 'Gerar & Baixar PNG'; btn.disabled = false;
+                        });
+                });
+            });
+
+            // Initial call
+            applyTemplate('center');
+            updatePreview();
+        });
+    </script>
+</body>
+</html>
